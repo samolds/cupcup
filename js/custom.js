@@ -3,11 +3,11 @@ function setup() {
   port.parent('viewport');
   port.parent('viewport');
 
-  loadImage('/img/nathan.png', function(img) {
+  loadImage('/cupcup/img/nathan.png', function(img) {
     image(img, 0, 0);
   });
 
-  loadImage('/img/natezilla.png', function(img) {
+  loadImage('/cupcup/img/natezilla.png', function(img) {
     image(img, 0, 0);
   });
 }
