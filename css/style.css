@@ -1,0 +1,25 @@
+html, body, div, canvas {
+  font-family: 'Questrial', sans-serif;
+  padding: 0;
+  margin: 0;
+}
+
+a, a:link, a:visited, a:active, a:hover {
+  font-size: 1em;
+  text-decoration: underline;
+  color: #fff;
+  text-shadow:
+    -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px 1px 0 #000,
+    1px 1px 0 #000;
+}
+
+a:hover {
+  color: #2288ff;
+}
+
+#site-title {
+  font-size: 3em;
+  text-decoration: none;
+}
