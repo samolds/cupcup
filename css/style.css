@@ -2,11 +2,10 @@ html, body, div, canvas {
   font-family: 'Questrial', sans-serif;
   padding: 0;
   margin: 0;
+  background-color: #eee;
 }
 
-a, a:link, a:visited, a:active, a:hover {
-  font-size: 1em;
-  text-decoration: underline;
+p, div, small, h1, h2, h3, h4, h5, a, a:link, a:visited, a:active, a:hover {
   color: #fff;
   text-shadow:
     -1px -1px 0 #000,
