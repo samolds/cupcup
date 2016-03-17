@@ -20,7 +20,7 @@ var Globals = {
   shape: null,
   background: null,
 
-  possibleShapes: ["ellipse", "triangle", "quad"],
+  possibleShapes: ["ellipse", "triangle", "quad", "text"],
   possibleBackgrounds: [                  // (width x height)
                 { heightRatio:  0.666667, // (750 x 500)
                   path:         "/cupcup/img/master/bus.png",
@@ -183,7 +183,9 @@ function draw() {
 
   fill(pix);
 
-  if (Globals.shape === "triangle") {
+  if (Globals.shape === "ellipse") {
+    ellipse(x, y, Globals.pixelSize, Globals.pixelSize);
+  } else if (Globals.shape === "triangle") {
     var triWidth = randRange(Globals.pixelSize, Globals.pixelSize);
     var triHeight = randRange(Globals.pixelSize, Globals.pixelSize);
     var x1 = x + (triWidth / 1.2);
@@ -206,7 +208,10 @@ function draw() {
     var y4 = y - (quadHeight / 1.5);
     quad(x1, y1, x2, y2, x3, y3, x4, y4);
   } else {
-    ellipse(x, y, Globals.pixelSize, Globals.pixelSize);
+    var randomIndex = Math.floor(Math.random() * Globals.background.nickname.length);
+    var randomLetter = Globals.background.nickname[randomIndex];
+    textSize(Globals.pixelSize);
+    text(randomLetter, x, y);
   }
 
   Globals.x = Globals.x + Globals.stepSize;
