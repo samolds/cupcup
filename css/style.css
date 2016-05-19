@@ -20,6 +20,24 @@ a:hover {
   color: #2288ff;
 }
 
+form#options {
+  padding: 100px;
+  width: 50%;
+}
+
+form#options div,
+form#options div input,
+form#options div select,
+form#options div label {
+  text-align: left;
+  color: #000;
+  text-shadow: none;
+}
+
+form#options div {
+  padding: 10px 0;
+}
+
 #site-title {
   font-size: 3em;
   text-decoration: none;

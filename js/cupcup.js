@@ -1,140 +1,55 @@
-// Global variables used throughout this script crawling with side effects
-var Globals = {
-  portal: null,
-  backgroundImage: null,
-
-  stepSize: 100,
-  pixelSize: 200,
-  x: 0,
-  y: 0,
-  iterations: 7,
-
-  redAdjust: 1.0,
-  greenAdjust: 1.0,
-  blueAdjust: 1.0,
-
-  textPadding: 32,
-  paused: true,
-  downloadable: false,
-
-  shape: null,
-  background: {
-    loaded: false,
-  },
-
-  possibleShapes: ["ellipse", "triangle", "quad", "text"],
-  possibleBackgrounds: [                  // (width x height)
-                { heightRatio:  0.666667, // (750 x 500)
-                  path:         "/cupcup/img/master/bus.png",
-                  nickname:     "bus"
-                },
-                { heightRatio:  1.500000, // (500 x 750)
-                  path:         "/cupcup/img/master/butters.png",
-                  nickname:     "butters"
-                },
-                { heightRatio:  0.666667, // (750 x 500)
-                  path:         "/cupcup/img/master/captain.png",
-                  nickname:     "captain"
-                },
-                { heightRatio:  1.269231, // (650 x 825)
-                  path:         "/cupcup/img/master/captainpancake.png",
-                  nickname:     "captainpancake"
-                },
-                { heightRatio:  1.000000, // (600 x 600)
-                  path:         "/cupcup/img/master/cupcup.png",
-                  nickname:     "cupcup"
-                },
-                { heightRatio:  0.666667, // (750 x 500)
-                  path:         "/cupcup/img/master/face.png",
-                  nickname:     "face"
-                },
-                { heightRatio:  0.666667, // (750 x 500)
-                  path:         "/cupcup/img/master/littleewok.png",
-                  nickname:     "littleewok"
-                },
-                { heightRatio:  1.500000, // (500 x 750)
-                  path:         "/cupcup/img/master/nugget.png",
-                  nickname:     "nugget"
-                },
-                { heightRatio:  0.666667, // (750 x 500)
-                  path:         "/cupcup/img/master/pancake.png",
-                  nickname:     "pancake"
-                },
-                { heightRatio:  0.666667, // (750 x 500)
-                  path:         "/cupcup/img/master/poop.png",
-                  nickname:     "poop"
-                },
-                { heightRatio:  0.666667, // (750 x 500)
-                  path:         "/cupcup/img/master/poptart.png",
-                  nickname:     "poptart"
-                },
-                { heightRatio:  0.666667, // (750 x 500)
-                  path:         "/cupcup/img/master/rat.png",
-                  nickname:     "rat"
-                },
-                { heightRatio:  0.666667, // (750 x 500)
-                  path:         "/cupcup/img/master/shithead.png",
-                  nickname:     "shithead"
-                },
-                { heightRatio:  1.500000, // (500 x 750)
-                  path:         "/cupcup/img/master/sir.png",
-                  nickname:     "sir"
-                },
-                { heightRatio:  0.666667, // (750 x 500)
-                  path:         "/cupcup/img/master/turd.png",
-                  nickname:     "turd"
-                },
-
-                { heightRatio:  1.000000, // (600 x 600)
-                  path:         "/cupcup/img/squire/privatewaffles.png",
-                  nickname:     "privatewaffles"
-                },
-                { heightRatio:  1.000000, // (600 x 600)
-                  path:         "/cupcup/img/squire/b.png",
-                  nickname:     "b"
-                },
-                { heightRatio:  0.666667, // (750 x 500)
-                  path:         "/cupcup/img/squire/c.png",
-                  nickname:     "c"
-                },
-                { heightRatio:  1.000000, // (600 x 600)
-                  path:         "/cupcup/img/squire/d.png",
-                  nickname:     "d"
-                },
-                { heightRatio:  1.000000, // (600 x 600)
-                  path:         "/cupcup/img/squire/e.png",
-                  nickname:     "e"
-                },
-                { heightRatio:  0.666667, // (750 x 500)
-                  path:         "/cupcup/img/squire/fonzie.png",
-                  nickname:     "fonzie"
-                },
-              ],
-}
-
 // Initialization that happens only once before anything else
 window.onload = function() {
-  var randomIndex = Math.floor(Math.random() * Globals.possibleShapes.length);
-  Globals.shape = Globals.possibleShapes[randomIndex];
+  Globals.shape = getParameterByName('shape');
+  if (!Globals.shape || Globals.possibleShapes.indexOf(Globals.shape) === -1) {
+    var randomIndex = Math.floor(Math.random() * Globals.possibleShapes.length);
+    Globals.shape = Globals.possibleShapes[randomIndex];
+  }
 
-  randomIndex = Math.floor(Math.random() * Globals.possibleBackgrounds.length);
-  Globals.background = Globals.possibleBackgrounds[randomIndex];
+  Globals.background = Globals.possibleBackgrounds.filter(function(bg) {
+    return bg.nickname === getParameterByName('background');
+  });
+
+  if (Globals.background.length == 0) {
+    randomIndex = Math.floor(Math.random() * Globals.possibleBackgrounds.length);
+    Globals.background = Globals.possibleBackgrounds[randomIndex];
+  } else {
+    Globals.background = Globals.background[0];
+  }
 
   var dims = calculateCoverDimensions();
-
   Globals.portal = createCanvas(dims.x, dims.y, 'viewport');
   Globals.background.image = loadImage(Globals.background.path, dims);
 
   // Choose random starting step size and pixel sizes, randomly picked
-  // from a range around the initial sizes
-  Globals.stepSize = randRange(Globals.stepSize / 2, Globals.stepSize);
-  Globals.pixelSize = randRange(Globals.pixelSize / 2, Globals.pixelSize);
+  // from a range around the initial sizes if they were not provided as
+  // a query parameter
+  if (!isNaN(parseInt(getParameterByName('stepSize'))))
+    Globals.stepSize = parseInt(getParameterByName('stepSize'));
+  else
+    Globals.stepSize = randRange(Globals.stepSize / 2, Globals.stepSize);
+
+  if (!isNaN(parseInt(getParameterByName('pixelSize'))))
+    Globals.pixelSize = parseInt(getParameterByName('pixelSize'));
+  else
+    Globals.pixelSize = randRange(Globals.pixelSize / 2, Globals.pixelSize);
 
   // Adjust all of the pixels by some random value between 0 and 1
   // A value of 1 wont adjust the color at all
-  Globals.redAdjust = 1.0;
-  Globals.greenAdjust = 1.0;
-  Globals.blueAdjust = 1.0;
+  if (!isNaN(parseFloat(getParameterByName('redAdjust'))))
+    Globals.redAdjust = parseFloat(getParameterByName('redAdjust'));
+  else
+    Globals.redAdjust = 1.0;
+
+  if (!isNaN(parseFloat(getParameterByName('greenAdjust'))))
+    Globals.greenAdjust = parseFloat(getParameterByName('greenAdjust'));
+  else
+    Globals.greenAdjust = 1.0;
+
+  if (!isNaN(parseFloat(getParameterByName('blueAdjust'))))
+    Globals.blueAdjust = parseFloat(getParameterByName('blueAdjust'));
+  else
+    Globals.blueAdjust = 1.0;
 
   window.setInterval(function () {
     draw();
@@ -151,13 +66,28 @@ window.onresize = function(event) {
   updateBackground(dims);
 };
 
+// Gets query parameters. Modified from:
+// http://stackoverflow.com/a/901144
+function getParameterByName(name, url) {
+  if (!url) url = window.location.href;
+
+  name = name.replace(/[\[\]]/g, "\\$&");
+  var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)");
+  var results = regex.exec(url);
+
+  if (!results) return null;
+  if (!results[2]) return '';
+
+  return decodeURIComponent(results[2].replace(/\/+/g, ""));
+}
+
 // Builds an image object and draws it as the background from a path
 function loadImage(path, dims) {
   var img = new Image();
   img.src = path;
 
   img.onload = function() {
-    Globals.background.loaded = true;
+    Globals.backgroundLoaded = true;
     drawBackground(dims);
     Globals.background.imageData = Globals.portal.getImageData(0, 0, dims.x, dims.y);
   }
@@ -176,14 +106,21 @@ function createCanvas(dimX, dimY) {
 
 // Converts rgb colors to hex string
 function rgbToHex(r, g, b) {
-  if (r > 255 || g > 255 || b > 255)
-    throw "Invalid color component";
+  r = Math.max(r, 0);
+  r = Math.min(r, 255);
+
+  g = Math.max(g, 0);
+  g = Math.min(g, 255);
+
+  b = Math.max(b, 0);
+  b = Math.min(b, 255);
+
   return ((r << 16) | (g << 8) | b).toString(16);
 }
 
 // Repeatedly called forever until pause is clicked
 function draw() {
-  if (Globals.paused || !Globals.background.loaded) {
+  if (Globals.paused || !Globals.backgroundLoaded) {
     return;
   }
 
@@ -330,8 +267,9 @@ function drawBackground(dims) {
   text.setAttribute('id', 'image-download');
   text.text = 'Download!';
   text.style.position = 'absolute';
-  text.style.left = (dims.x - 117 - (Globals.textPadding * 2)).toString() + 'px';
+  text.style.left = (dims.x - 185 - (Globals.textPadding * 2)).toString() + 'px';
   text.style.top = (Globals.textPadding).toString() + 'px';
+  text.style.display = 'none';
 
   text.onclick = function() {
     // The download button is clicked
@@ -341,7 +279,14 @@ function drawBackground(dims) {
     saveCanvas(this, Globals.background.nickname);
   };
 
-  text.style.display = 'none';
+  // Options
+  text = addElement('a');
+  text.setAttribute('href', '/cupcup/options.html');
+  text.setAttribute('id', 'options');
+  text.text = 'Options';
+  text.style.position = 'absolute';
+  text.style.left = (dims.x - 117 - Globals.textPadding).toString() + 'px';
+  text.style.top = (Globals.textPadding).toString() + 'px';
 
   // Attribution
   text = addElement('small');
@@ -385,16 +330,20 @@ function updateBackground(dims) {
 
   var author = document.getElementById('site-author');
   var pause = document.getElementById('pause');
+  var options = document.getElementById('options');
   var download = document.getElementById('image-download');
 
-  if (author === null || download === null || pause === null) {
+  if (author === null || download === null || pause === null || options === null) {
     return;
   }
 
   pause.style.left = (dims.x - 40 - Globals.textPadding).toString() + 'px';
   pause.style.top = (Globals.textPadding).toString() + 'px';
 
-  download.style.left = (dims.x - 117 - (Globals.textPadding * 2)).toString() + 'px';
+  options.style.left = (dims.x - 117 - Globals.textPadding).toString() + 'px';
+  options.style.top = (Globals.textPadding).toString() + 'px';
+
+  download.style.left = (dims.x - 185 - (Globals.textPadding * 2)).toString() + 'px';
   download.style.top = (Globals.textPadding).toString() + 'px';
 
   author.style.left = (dims.x - 190 - Globals.textPadding).toString() + 'px';
