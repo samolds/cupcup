@@ -138,7 +138,7 @@ window.onload = function() {
 
   window.setInterval(function () {
     draw();
-  }, 10);
+  }, 0);
 }
 
 // Called whenever the window is resized
@@ -202,15 +202,16 @@ function draw() {
   pix[1] = Globals.background.imageData.data[idx + 1];
   pix[2] = Globals.background.imageData.data[idx + 2];
 
-  //pix[0] = pix[0] * Globals.redAdjust; // red
-  //pix[1] = pix[1] * Globals.greenAdjust; // green
-  //pix[2] = pix[2] * Globals.blueAdjust; // blue
+  pix[0] = pix[0] * Globals.redAdjust; // red
+  pix[1] = pix[1] * Globals.greenAdjust; // green
+  pix[2] = pix[2] * Globals.blueAdjust; // blue
 
   var hex = "#" + ("000000" + rgbToHex(pix[0], pix[1], pix[2])).slice(-6);
   Globals.portal.fillStyle = hex;
 
   if (Globals.shape === "ellipse") {
-    Globals.portal.arc(x, y, Globals.pixelSize, 0, Math.PI*2, true);
+    Globals.portal.beginPath();
+    Globals.portal.arc(x, y, Globals.pixelSize, 0, Math.PI * 2, false);
     Globals.portal.fill();
   } else if (Globals.shape === "triangle") {
     var triWidth = randRange(Globals.pixelSize, Globals.pixelSize);
