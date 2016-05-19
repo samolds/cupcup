@@ -18,7 +18,9 @@ var Globals = {
   downloadable: false,
 
   shape: null,
-  background: null,
+  background: {
+    loaded: false,
+  },
 
   possibleShapes: ["ellipse", "triangle", "quad", "text"],
   possibleBackgrounds: [                  // (width x height)
@@ -84,8 +86,8 @@ var Globals = {
                 },
 
                 { heightRatio:  1.000000, // (600 x 600)
-                  path:         "/cupcup/img/squire/a.png",
-                  nickname:     "a"
+                  path:         "/cupcup/img/squire/privatewaffles.png",
+                  nickname:     "privatewaffles"
                 },
                 { heightRatio:  1.000000, // (600 x 600)
                   path:         "/cupcup/img/squire/b.png",
@@ -110,27 +112,18 @@ var Globals = {
               ],
 }
 
-
-// P5 Specific function
 // Initialization that happens only once before anything else
-function preload() {
+window.onload = function() {
   var randomIndex = Math.floor(Math.random() * Globals.possibleShapes.length);
   Globals.shape = Globals.possibleShapes[randomIndex];
 
   randomIndex = Math.floor(Math.random() * Globals.possibleBackgrounds.length);
   Globals.background = Globals.possibleBackgrounds[randomIndex];
-  Globals.background.image = loadImage(Globals.background.path);
-}
 
-
-// P5 Specific function
-// Initialization that runs once after 'preload'
-function setup() {
   var dims = calculateCoverDimensions();
-  Globals.portal = createCanvas(dims.x, dims.y);
-  Globals.portal.parent('viewport');
-  drawBackground(dims);
-  frameRate(90);
+
+  Globals.portal = createCanvas(dims.x, dims.y, 'viewport');
+  Globals.background.image = loadImage(Globals.background.path, dims);
 
   // Choose random starting step size and pixel sizes, randomly picked
   // from a range around the initial sizes
@@ -143,27 +136,55 @@ function setup() {
   Globals.greenAdjust = 1.0;
   Globals.blueAdjust = 1.0;
 
-  noLoop(); // "turn off" calling the draw loop
+  window.setInterval(function () {
+    draw();
+  }, 10);
 }
 
-
-// P5 Specific function
 // Called whenever the window is resized
-function windowResized() {
+window.onresize = function(event) {
   var dims = calculateCoverDimensions();
-  resizeCanvas(dims.x, dims.y);
+
+  Globals.portal.canvas.width = dims.x;
+  Globals.portal.canvas.height = dims.y;
+
   updateBackground(dims);
+};
+
+// Builds an image object and draws it as the background from a path
+function loadImage(path, dims) {
+  var img = new Image();
+  img.src = path;
+
+  img.onload = function() {
+    Globals.background.loaded = true;
+    drawBackground(dims);
+    Globals.background.imageData = Globals.portal.getImageData(0, 0, dims.x, dims.y);
+  }
+
+  return img;
 }
 
+// Creates a canvas element with the provided dimensions
+function createCanvas(dimX, dimY) {
+  var canvas = addElement("canvas");
+  canvas.setAttribute('width', dimX);
+  canvas.setAttribute('height', dimY);
+  var ctx = canvas.getContext('2d');
+  return ctx;
+}
 
-// P5 Specific function
-// Repeatedly called forever after 'preload' and 'setup'
+// Converts rgb colors to hex string
+function rgbToHex(r, g, b) {
+  if (r > 255 || g > 255 || b > 255)
+    throw "Invalid color component";
+  return ((r << 16) | (g << 8) | b).toString(16);
+}
+
+// Repeatedly called forever until pause is clicked
 function draw() {
-  if (Globals.paused) {
+  if (Globals.paused || !Globals.background.loaded) {
     return;
-  }
-  if (Globals.iterations <= 0) {
-    noLoop(); // "turn off" calling the draw loop
   }
 
   var x = randRange(Globals.stepSize, Globals.x);
@@ -175,16 +196,22 @@ function draw() {
   y = Math.max(0, y)
   y = Math.min(Globals.background.image.height - 1, y);
 
-  var pix = Globals.background.image.get(x, y);
+  var idx = 4 * (x + y * Globals.background.image.width);
+  var pix = [0, 0, 0];
+  pix[0] = Globals.background.imageData.data[idx + 0];
+  pix[1] = Globals.background.imageData.data[idx + 1];
+  pix[2] = Globals.background.imageData.data[idx + 2];
 
-  pix[0] = pix[0] * Globals.redAdjust; // red
-  pix[1] = pix[1] * Globals.greenAdjust; // green
-  pix[2] = pix[2] * Globals.blueAdjust; // blue
+  //pix[0] = pix[0] * Globals.redAdjust; // red
+  //pix[1] = pix[1] * Globals.greenAdjust; // green
+  //pix[2] = pix[2] * Globals.blueAdjust; // blue
 
-  fill(pix);
+  var hex = "#" + ("000000" + rgbToHex(pix[0], pix[1], pix[2])).slice(-6);
+  Globals.portal.fillStyle = hex;
 
   if (Globals.shape === "ellipse") {
-    ellipse(x, y, Globals.pixelSize, Globals.pixelSize);
+    Globals.portal.arc(x, y, Globals.pixelSize, 0, Math.PI*2, true);
+    Globals.portal.fill();
   } else if (Globals.shape === "triangle") {
     var triWidth = randRange(Globals.pixelSize, Globals.pixelSize);
     var triHeight = randRange(Globals.pixelSize, Globals.pixelSize);
@@ -194,7 +221,12 @@ function draw() {
     var y2 = y + (triHeight / 1.2);
     var x3 = x - (triWidth / 2.4);
     var y3 = y - (triHeight / 2.4);
-    triangle(x1, y1, x2, y2, x3, y3);
+
+    Globals.portal.beginPath();
+    Globals.portal.moveTo(x1, y1);
+    Globals.portal.lineTo(x2, y2);
+    Globals.portal.lineTo(x3, y3);
+    Globals.portal.fill();
   } else if (Globals.shape === "quad") {
     var quadWidth = randRange(Globals.pixelSize, Globals.pixelSize);
     var quadHeight = randRange(Globals.pixelSize, Globals.pixelSize);
@@ -206,12 +238,19 @@ function draw() {
     var y3 = y - (quadHeight / 1.3);
     var x4 = x + (quadWidth / 1.5);
     var y4 = y - (quadHeight / 1.5);
-    quad(x1, y1, x2, y2, x3, y3, x4, y4);
+
+    Globals.portal.beginPath();
+    Globals.portal.moveTo(x1, y1);
+    Globals.portal.lineTo(x2, y2);
+    Globals.portal.lineTo(x3, y3);
+    Globals.portal.lineTo(x4, y4);
+    Globals.portal.fill();
   } else {
     var randomIndex = Math.floor(Math.random() * Globals.background.nickname.length);
     var randomLetter = Globals.background.nickname[randomIndex];
-    textSize(Globals.pixelSize);
-    text(randomLetter, x, y);
+
+    Globals.portal.font = (Globals.pixelSize).toString() + "px sans-serif";
+    Globals.portal.fillText(randomLetter, x, y);
   }
 
   Globals.x = Globals.x + Globals.stepSize;
@@ -232,20 +271,16 @@ function draw() {
   }
 }
 
-
-// Custom Helper Function
 // Picks a random number within a range around a value
 function randRange(range, pos) {
   return Math.floor(Math.random() * (range - 1) + pos - (range / 2));
 }
 
-
-// Custom Helper Function
 // Calculates the necessary dimensions of the image such that the entire
 // window is filled without ruining the aspect ratio
 function calculateCoverDimensions() {
-  var w = windowWidth;
-  var h = windowHeight;
+  var w = window.innerWidth;
+  var h = window.innerHeight;
   var expectedHeight = Math.ceil(w * Globals.background.heightRatio);
   var expectedWidth = Math.ceil(h / Globals.background.heightRatio);
 
@@ -260,58 +295,82 @@ function calculateCoverDimensions() {
   return {x: w, y: h};
 }
 
-
-// Custom Helper Function
 // Draws the background and places all html elements on initial page load
 function drawBackground(dims) {
-  Globals.background.image.resize(dims.x, dims.y);
-  background(Globals.background.image, 0, 0);
-  noStroke();
+  Globals.background.image.width = dims.x;
+  Globals.background.image.height = dims.y;
+  Globals.portal.drawImage(Globals.background.image, 0, 0, dims.x, dims.y);
 
   // Pause button
-  text = createA('#!', 'Go!');
-  text.id('pause');
-  text.position(dims.x - 40 - Globals.textPadding, Globals.textPadding);
-  text.mouseClicked(function() {
+  var text = addElement('a');
+  text.setAttribute('href', '#!');
+  text.setAttribute('id', 'pause');
+  text.text = 'Go!';
+  text.style.position = 'absolute';
+  text.style.left = (dims.x - 40 - Globals.textPadding).toString() + 'px';
+  text.style.top = (Globals.textPadding).toString() + 'px';
+
+  text.onclick = function() {
     // The pause button is clicked
     if (Globals.paused) {
       Globals.downloadable = true;
-      select('#image-download').show();
-      loop(); // "turn on" calling the draw loop
+      document.getElementById('image-download').style.display = "block";
       document.getElementById('pause').text = "Pause"
     } else {
-      noLoop(); // "turn off" calling the draw loop
       document.getElementById('pause').text = "Go!"
     }
     Globals.paused = !Globals.paused;
     return false; // prevent browser default
-  });
+  };
 
   // Download link
-  text = createA('#!', 'Download!');
-  text.id('image-download');
-  text.position(dims.x - 117 - (Globals.textPadding * 2), Globals.textPadding);
-  text.mouseClicked(function() {
+  text = addElement('a');
+  text.setAttribute('href', '#!');
+  text.setAttribute('id', 'image-download');
+  text.text = 'Download!';
+  text.style.position = 'absolute';
+  text.style.left = (dims.x - 117 - (Globals.textPadding * 2)).toString() + 'px';
+  text.style.top = (Globals.textPadding).toString() + 'px';
+
+  text.onclick = function() {
     // The download button is clicked
-    Globals.portal.textSize(32);
-    Globals.portal.fill('#fff'); // white
-    Globals.portal.text("cupcup.club", (Globals.textPadding / 2), Globals.background.image.height - (Globals.textPadding / 2));
-    saveCanvas(Globals.portal, Globals.background.nickname, 'png');
-    return false; // prevent browser default
-  });
-  text.hide();
+    Globals.portal.font = "32px sans-serif";
+    Globals.portal.fillStyle = '#ffffff'; // white
+    Globals.portal.fillText("cupcup.club", (Globals.textPadding / 2), Globals.background.image.height - (Globals.textPadding / 2));
+    saveCanvas(this, Globals.background.nickname);
+  };
+
+  text.style.display = 'none';
 
   // Attribution
-  var text = createElement('small', 'A weekend project by: ');
-  text.id('site-author');
-  text.position(dims.x - 190 - Globals.textPadding, dims.y - Globals.textPadding + 2);
+  text = addElement('small');
+  text.setAttribute('id', 'site-author');
+  text.innerText = 'A weekend project by: ';
+  text.style.position = 'absolute';
+  text.style.left = (dims.x - 190 - Globals.textPadding).toString() + 'px';
+  text.style.top = (dims.y - Globals.textPadding + 2).toString() + 'px';
 
-  text = createA('http://samolds.com', 'Sam Olds');
-  text.parent(select('#site-author'));
+  text = addElement('a');
+  text.setAttribute('href', 'http://samolds.com');
+  text.text = 'Sam Olds';
+  document.getElementById('site-author').appendChild(text);
 }
 
+// Downloads the canvas as a png
+function saveCanvas(link, name) {
+  var canvas = document.getElementById('viewport').children[0];
+  var image = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+  link.href = image;
+  link.download = name + '.png';
+}
 
-// Custom Helper Function
+// Appends the elemnt to the DOM
+function addElement(kind) {
+  var el = document.createElement(kind);
+  document.getElementById('viewport').appendChild(el);
+  return el;
+}
+
 // Readjusts place of HTML elements and resizes image whenever the
 // window size is changed
 function updateBackground(dims) {
@@ -319,19 +378,26 @@ function updateBackground(dims) {
     return;
   }
 
-  Globals.background.image.resize(dims.x, dims.y);
-  background(Globals.background.image, 0, 0);
+  Globals.background.image.width = dims.x;
+  Globals.background.image.height = dims.y;
+  Globals.portal.drawImage(Globals.background.image, 0, 0, dims.x, dims.y);
 
-  var author = select('#site-author');
-  var pause = select('#pause');
-  var download = select('#image-download');
+  var author = document.getElementById('site-author');
+  var pause = document.getElementById('pause');
+  var download = document.getElementById('image-download');
 
   if (author === null || download === null || pause === null) {
     return;
   }
 
-  pause.position(dims.x - 40 - Globals.textPadding, Globals.textPadding);
-  download.position(dims.x - 117 - (Globals.textPadding * 2), Globals.textPadding);
-  author.position(dims.x - 190 - Globals.textPadding, dims.y - Globals.textPadding + 2);
-  download.hide();
+  pause.style.left = (dims.x - 40 - Globals.textPadding).toString() + 'px';
+  pause.style.top = (Globals.textPadding).toString() + 'px';
+
+  download.style.left = (dims.x - 117 - (Globals.textPadding * 2)).toString() + 'px';
+  download.style.top = (Globals.textPadding).toString() + 'px';
+
+  author.style.left = (dims.x - 190 - Globals.textPadding).toString() + 'px';
+  author.style.top = (dims.y - Globals.textPadding + 2).toString() + 'px';
+
+  download.style.display = 'none';
 }
