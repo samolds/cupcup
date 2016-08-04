@@ -6,15 +6,27 @@ window.onload = function() {
     Globals.shape = Globals.possibleShapes[randomIndex];
   }
 
-  Globals.background = Globals.possibleBackgrounds.filter(function(bg) {
-    return bg.nickname === getParameterByName('background');
-  });
-
-  if (Globals.background.length == 0) {
-    randomIndex = Math.floor(Math.random() * Globals.possibleBackgrounds.length);
-    Globals.background = Globals.possibleBackgrounds[randomIndex];
+  var customBackgroundPath = getParameterByName('customBackgroundPath');
+  var customBackgroundWidth = parseInt(getParameterByName('customBackgroundWidth'));
+  var customBackgroundHeight = parseInt(getParameterByName('customBackgroundHeight'));
+  if (customBackgroundPath && !isNaN(customBackgroundWidth) && !isNaN(customBackgroundHeight) &&
+      customBackgroundWidth > 0 && customBackgroundHeight > 0) {
+    Globals.background = {};
+    Globals.background.heightRatio = customBackgroundHeight / customBackgroundWidth;
+    Globals.background.path = customBackgroundPath;
+    Globals.background.nickname = getParameterByName('customBackgroundNickname') || "null";
   } else {
-    Globals.background = Globals.background[0];
+    var possibleBackground = getParameterByName('background');
+    Globals.background = Globals.possibleBackgrounds.filter(function(bg) {
+      return bg.nickname === possibleBackground;
+    });
+
+    if (Globals.background.length == 0) {
+      randomIndex = Math.floor(Math.random() * Globals.possibleBackgrounds.length);
+      Globals.background = Globals.possibleBackgrounds[randomIndex];
+    } else {
+      Globals.background = Globals.background[0];
+    }
   }
 
   var dims = calculateCoverDimensions();
@@ -24,32 +36,42 @@ window.onload = function() {
   // Choose random starting step size and pixel sizes, randomly picked
   // from a range around the initial sizes if they were not provided as
   // a query parameter
-  if (!isNaN(parseInt(getParameterByName('stepSize'))))
-    Globals.stepSize = parseInt(getParameterByName('stepSize'));
-  else
+  var stepSize = parseInt(getParameterByName('stepSize'));
+  if (!isNaN(stepSize)) {
+    Globals.stepSize = stepSize;
+  } else {
     Globals.stepSize = randRange(Globals.stepSize / 2, Globals.stepSize);
+  }
 
-  if (!isNaN(parseInt(getParameterByName('pixelSize'))))
-    Globals.pixelSize = parseInt(getParameterByName('pixelSize'));
-  else
+  var pixelSize = parseInt(getParameterByName('pixelSize'));
+  if (!isNaN(pixelSize)) {
+    Globals.pixelSize = pixelSize;
+  } else {
     Globals.pixelSize = randRange(Globals.pixelSize / 2, Globals.pixelSize);
+  }
 
   // Adjust all of the pixels by some random value between 0 and 1
   // A value of 1 wont adjust the color at all
-  if (!isNaN(parseFloat(getParameterByName('redAdjust'))))
-    Globals.redAdjust = parseFloat(getParameterByName('redAdjust'));
-  else
+  var redAdjust = parseFloat(getParameterByName('redAdjust'));
+  if (!isNaN(redAdjust)) {
+    Globals.redAdjust = redAdjust;
+  } else {
     Globals.redAdjust = 1.0;
+  }
 
-  if (!isNaN(parseFloat(getParameterByName('greenAdjust'))))
-    Globals.greenAdjust = parseFloat(getParameterByName('greenAdjust'));
-  else
+  var greenAdjust = parseFloat(getParameterByName('greenAdjust'))
+  if (!isNaN(greenAdjust)) {
+    Globals.greenAdjust = greenAdjust;
+  } else {
     Globals.greenAdjust = 1.0;
+  }
 
-  if (!isNaN(parseFloat(getParameterByName('blueAdjust'))))
-    Globals.blueAdjust = parseFloat(getParameterByName('blueAdjust'));
-  else
+  var blueAdjust = parseFloat(getParameterByName('blueAdjust'))
+  if (!isNaN(blueAdjust)) {
+    Globals.blueAdjust = blueAdjust;
+  } else {
     Globals.blueAdjust = 1.0;
+  }
 
   window.setInterval(function () {
     draw();
@@ -84,7 +106,8 @@ function getParameterByName(name, url) {
 // Builds an image object and draws it as the background from a path
 function loadImage(path, dims) {
   var img = new Image();
-  img.src = path;
+  img.crossOrigin = "Anonymous";
+  img.src = decodeURIComponent(path);
 
   img.onload = function() {
     Globals.backgroundLoaded = true;

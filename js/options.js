@@ -1,6 +1,10 @@
 var formIDs = [
     'shape',
     'background',
+    'customBackgroundPath',
+    'customBackgroundWidth',
+    'customBackgroundHeight',
+    'customBackgroundNickname',
     'pixelSize',
     'stepSize',
     'redAdjust',
@@ -11,12 +15,36 @@ var formIDs = [
 window.onload = function() {
   // Builds up a query string to redirect to when the submit button is clicked
   document.getElementById('submit').onclick = function() {
+    var cusPath = document.getElementById('customBackgroundPath');
+    var cusWidth = document.getElementById('customBackgroundWidth');
+    var cusHeight = document.getElementById('customBackgroundHeight');
+
+    // If any of these three exist but not all three, "throw" error
+    if ((cusPath.value && cusWidth.value && cusHeight.value) ||
+        !(cusPath.value || cusWidth.value || cusHeight.value)) {
+      cusPath.classList.remove("error");
+      cusWidth.classList.remove("error");
+      cusHeight.classList.remove("error");
+      document.getElementById('error_msg').classList.add("hide");
+    } else {
+      cusPath.classList.add("error");
+      cusWidth.classList.add("error");
+      cusHeight.classList.add("error");
+      document.getElementById('error_msg').classList.remove("hide");
+      return;
+    }
+
     var res = '/cupcup/?';
 
     for (var i = 0; i < formIDs.length; i++) {
       var input = document.getElementById(formIDs[i]);
-      if (input.value && input.value !== 'random')
-        res += formIDs[i] + '=' + input.value + '&';
+      if (input.value && input.value !== 'random') {
+        if (formIDs[i] === 'customBackgroundPath') {
+          res += formIDs[i] + '=' + encodeURIComponent(input.value) + '&';
+        } else {
+          res += formIDs[i] + '=' + input.value + '&';
+        }
+      }
     }
     res = res.substr(0, res.length - 1);
 

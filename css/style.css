@@ -42,3 +42,20 @@ form#options div {
   font-size: 3em;
   text-decoration: none;
 }
+
+.hide {
+  display: none;
+}
+
+.error {
+  color: #f00;
+  border-color: #f00;
+}
+
+.options_error_msg {
+  text-align: center;
+  white-space: nowrap;
+  color: #000;
+  text-shadow: None;
+  border-bottom: 2px #f00 solid;
+}
